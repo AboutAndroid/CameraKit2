@@ -148,7 +148,12 @@ public class Camera1 extends CameraImpl {
                 }
             }
 
-            mCamera.setParameters(mCameraParameters);
+			try {
+				mCamera.setParameters(mCameraParameters);
+			} catch (Exception e) {
+				Log.e("CameraKit", "Failed to Set Camera parameters " + e.getMessage() );
+			}
+            
         } else {
             mFlash = flash;
         }
@@ -439,7 +444,11 @@ public class Camera1 extends CameraImpl {
         setFocus(mFocus);
         setFlash(mFlash);
 
-        mCamera.setParameters(mCameraParameters);
+        try {
+            mCamera.setParameters(mCameraParameters);
+        } catch (Exception e) {
+            Log.e("CameraKit", "Failed to Set Camera parameters " + e.getMessage() );
+        }
     }
 
     private void collectCameraProperties() {
@@ -612,7 +621,11 @@ public class Camera1 extends CameraImpl {
                             parameters.setFocusAreas(meteringAreas);
                             parameters.setMeteringAreas(meteringAreas);
 
-                            mCamera.setParameters(parameters);
+                            try {
+                                mCamera.setParameters(parameters);
+                            } catch (Exception e) {
+                                Log.e("CameraKit", "Failed to Set Camera parameters " + e.getMessage() );
+                            }
                             mCamera.autoFocus(new Camera.AutoFocusCallback() {
                                 @Override
                                 public void onAutoFocus(boolean success, Camera camera) {
@@ -648,7 +661,11 @@ public class Camera1 extends CameraImpl {
                         params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
                         params.setFocusAreas(null);
                         params.setMeteringAreas(null);
-                        camera.setParameters(params);
+                        try {
+                            camera.setParameters(params);
+                        } catch (Exception e) {
+                            Log.e("CameraKit", "Failed to Set Camera parameters " + e.getMessage() );
+                        }
                     }
 
                     if (mAutofocusCallback != null) {
