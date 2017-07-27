@@ -9,6 +9,7 @@ import android.arch.lifecycle.OnLifecycleEvent;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.pm.PackageManager;
+import android.hardware.Camera;
 import android.content.res.TypedArray;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
@@ -23,6 +24,7 @@ import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
 import android.view.Display;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.widget.FrameLayout;
 
@@ -68,6 +70,11 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         workerThread.start();
         sWorkerHandler = new Handler(workerThread.getLooper());
     }
+
+    private int currentZoom = 0;
+    private float scaleFactor = 1.0f;
+
+    private ScaleGestureDetector detector;
 
     @Facing
     private int mFacing;
@@ -172,6 +179,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                     }
 
                     mPreviewImpl.getView().dispatchTouchEvent(motionEvent);
+                    onTouchEvent(motionEvent);
                     return true;
                 }
             });
@@ -361,6 +369,81 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     public void setZoom(@Zoom int zoom) {
         this.mZoom = zoom;
         mCameraImpl.setZoom(mZoom);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        Camera.Parameters params = mCameraImpl.getCamera().getParameters();
+        int action = event.getAction();
+        if (event.getPointerCount() > 1) {
+            if (action == MotionEvent.ACTION_POINTER_DOWN) {
+                //mDist = getFingerSpacing(event);
+            } else if (action == MotionEvent.ACTION_MOVE && params.isZoomSupported()) {
+                mCameraImpl.getCamera().cancelAutoFocus();
+                handleZoom(event, params);
+            }
+        } else {
+            if (action == MotionEvent.ACTION_UP) {
+                handleFocus(event, params);
+            }
+        }
+        return true;
+    }
+    private void handleZoom(MotionEvent event, Camera.Parameters params) {
+        final int maxZoom = params.getMaxZoom();
+        System.out.println("MaxZoom " + maxZoom);
+        currentZoom = params.getZoom();
+
+        if(detector == null) {
+            detector = new ScaleGestureDetector(getContext(), new ScaleGestureDetector.SimpleOnScaleGestureListener() {
+                @Override
+                public boolean onScale(ScaleGestureDetector detector) {
+                    //System.out.println("Zoom - scalefactor " + detector.getScaleFactor());
+                    float tempZoom = (float)currentZoom;
+                    if(detector.getScaleFactor() < 1.0f) {
+                        tempZoom = (float)Math.floor(tempZoom * detector.getScaleFactor());
+                    }
+                    else {
+                        tempZoom = (float)Math.ceil(tempZoom * detector.getScaleFactor());
+                    }
+                    //System.out.println("Zoom - tempzoom " + tempZoom);
+                    //currentZoom *= detector.getScaleFactor();
+                    currentZoom = (int)Math.max(1, Math.min(tempZoom, maxZoom));
+                    //System.out.println("Zoom - currentZoom " + currentZoom);
+                    invalidate();
+                    return true;
+                }
+            });
+        }
+        detector.onTouchEvent(event);
+
+        //System.out.println("CurrentZoom: " + currentZoom);
+        params.setZoom(currentZoom);
+        mCameraImpl.getCamera().setParameters(params);
+    }
+
+    public void handleFocus(MotionEvent event, Camera.Parameters params) {
+        int pointerId = event.getPointerId(0);
+        int pointerIndex = event.findPointerIndex(pointerId);
+        float x = event.getX(pointerIndex);
+        float y = event.getY(pointerIndex);
+
+        List<String> supportedFocusModes = params.getSupportedFocusModes();
+        if (supportedFocusModes != null && supportedFocusModes.contains(Camera.Parameters.FOCUS_MODE_AUTO)) {
+            mCameraImpl.getCamera().autoFocus(new Camera.AutoFocusCallback() {
+                @Override
+                public void onAutoFocus(boolean b, Camera camera) {
+                    // focus on touch
+                }
+            });
+        }
+    }
+
+    private float getFingerSpacing(MotionEvent event) {
+        // ...
+        float x = event.getX(0) - event.getX(1);
+        float y = event.getY(0) - event.getY(1);
+        return (float)Math.sqrt(x * x + y * y);
     }
 
     public void setPermissions(@Permissions int permissions) {

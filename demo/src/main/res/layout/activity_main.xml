@@ -26,6 +26,7 @@
                 app:ckCropOutput="false"
                 app:ckFacing="back"
                 app:ckFlash="off"
+                app:ckZoom="pinch"
                 app:ckFocus="tapWithMarker"
                 app:ckJpegQuality="100"
                 app:ckMethod="standard" />

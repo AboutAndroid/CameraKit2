@@ -106,6 +106,11 @@ public class Camera1 extends CameraImpl {
     }
 
     @Override
+    Camera getCamera() {
+        return mCamera;
+    }
+
+    @Override
     void setDisplayOrientation(int displayOrientation) {
         this.mDisplayOrientation = displayOrientation;
     }

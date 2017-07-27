@@ -1,5 +1,6 @@
 package com.flurgle.camerakit;
 
+import android.hardware.Camera;
 import android.support.annotation.Nullable;
 
 abstract class CameraImpl {
@@ -14,6 +15,7 @@ abstract class CameraImpl {
 
     abstract void start();
     abstract void stop();
+    abstract Camera getCamera();
 
     abstract void setDisplayOrientation(int displayOrientation);
 
