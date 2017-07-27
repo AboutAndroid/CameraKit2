@@ -17,7 +17,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -344,9 +343,17 @@ public class Camera1 extends CameraImpl {
 
         CamcorderProfile camcorderProfile = getCamcorderProfile(mVideoQuality);
 
-        mCaptureSize = getSizeWithClosestRatio(
+        Size size = previewSizes.get(0);
+        for(int i = 0; i < previewSizes.size(); i++) {
+            if(previewSizes.get(i).getWidth() > size.getWidth()) {
+                size = previewSizes.get(i);
+            }
+        }
+        mCaptureSize = size;
+
+        /*mCaptureSize = getSizeWithClosestRatio(
                 (videoSizes == null || videoSizes.isEmpty()) ? previewSizes : videoSizes,
-                camcorderProfile.videoFrameWidth, camcorderProfile.videoFrameHeight);
+                camcorderProfile.videoFrameWidth, camcorderProfile.videoFrameHeight);*/
 
         mPreviewSize = getSizeWithClosestRatio(previewSizes, mCaptureSize.getWidth(), mCaptureSize.getHeight());
     }
@@ -465,7 +472,7 @@ public class Camera1 extends CameraImpl {
                 getCaptureResolution().getHeight()
         );
         mCamera.setParameters(mCameraParameters);
-        
+
         int rotation = calculateCaptureRotation();
         mCameraParameters.setRotation(rotation);
         mCamera.setParameters(mCameraParameters);
