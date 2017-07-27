@@ -459,15 +459,15 @@ public class Camera1 extends CameraImpl {
                 getPreviewResolution().getHeight()
         );
 
-        mCameraParameters.setPictureSize(
+        /*mCameraParameters.setPictureSize(
                 getCaptureResolution().getWidth(),
                 getCaptureResolution().getHeight()
-        );
+        );*/
         int rotation = calculateCaptureRotation();
         mCameraParameters.setRotation(rotation);
 
         setFocus(mFocus);
-        setFlash(mFlash);
+        //setFlash(mFlash);
 
         try {
             mCamera.setParameters(mCameraParameters);
