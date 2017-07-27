@@ -377,6 +377,9 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        if(mCameraImpl == null || mCameraImpl.getCamera() == null) {
+            return false;
+        }
         Camera.Parameters params = mCameraImpl.getCamera().getParameters();
         int action = event.getAction();
         if (event.getPointerCount() > 1) {
@@ -396,7 +399,6 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
     private void handleZoom(MotionEvent event, Camera.Parameters params) {
         final int maxZoom = params.getMaxZoom();
         currentZoom = params.getZoom();
-
         if(detector == null) {
             detector = new ScaleGestureDetector(getContext(), new ScaleGestureDetector.SimpleOnScaleGestureListener() {
                 @Override
@@ -411,7 +413,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                     }
                     //System.out.println("Zoom - tempzoom " + tempZoom);
                     //currentZoom *= detector.getScaleFactor();
-                    currentZoom = (int)Math.max(0, Math.min(tempZoom, maxZoom));
+                    currentZoom = (int)Math.max(1, Math.min(tempZoom, maxZoom));
                     //System.out.println("Zoom - currentZoom " + currentZoom);
                     invalidate();
                     return true;

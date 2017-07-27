@@ -389,9 +389,6 @@ public class Camera1 extends CameraImpl {
         mCamera = Camera.open(mCameraId);
         mCameraParameters = mCamera.getParameters();
 
-        //Let's see if we can set params right away, TODO remove this
-        mCamera.setParameters(mCameraParameters);
-
         collectCameraProperties();
         adjustCameraParameters();
         updateRotation();
@@ -465,17 +462,14 @@ public class Camera1 extends CameraImpl {
                 getPreviewResolution().getWidth(),
                 getPreviewResolution().getHeight()
         );
-        mCamera.setParameters(mCameraParameters);
 
         mCameraParameters.setPictureSize(
                 getCaptureResolution().getWidth(),
                 getCaptureResolution().getHeight()
         );
-        mCamera.setParameters(mCameraParameters);
 
         int rotation = calculateCaptureRotation();
         mCameraParameters.setRotation(rotation);
-        mCamera.setParameters(mCameraParameters);
 
         setFocus(mFocus);
         setFlash(mFlash);
