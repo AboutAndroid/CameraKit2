@@ -16,6 +16,7 @@ abstract class CameraImpl {
     abstract void start();
     abstract void stop();
     abstract Camera getCamera();
+    abstract int getCameraRotation();
 
     abstract void setDisplayOrientation(int displayOrientation);
 

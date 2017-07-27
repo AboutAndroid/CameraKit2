@@ -51,6 +51,7 @@ public class Camera1 extends CameraImpl {
     private boolean capturingImage = false;
 
     private int mDisplayOrientation;
+    private int mCameraRotation;
 
     @Facing
     private int mFacing;
@@ -88,8 +89,12 @@ public class Camera1 extends CameraImpl {
 
     }
 
-    // CameraImpl:
+    @Override
+    int getCameraRotation() {
+        return mCameraRotation;
+    }
 
+    // CameraImpl:
     @Override
     void start() {
         setFacing(mFacing);
@@ -379,9 +384,21 @@ public class Camera1 extends CameraImpl {
 
         collectCameraProperties();
         adjustCameraParameters();
-        mCamera.setDisplayOrientation(calculatePreviewRotation());
+        updateRotation();
 
         mCameraListener.onCameraOpened();
+    }
+
+    private void updateRotation() {
+        int rotation;
+        if (mCameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+            rotation = (360 - (mCameraInfo.orientation + mDisplayOrientation) % 360) % 360;
+            mCameraRotation = rotation + 180;
+        } else {
+            rotation = (mCameraInfo.orientation - mDisplayOrientation + 360) % 360;
+            mCameraRotation = rotation;
+        }
+        mCamera.setDisplayOrientation(rotation);
     }
 
     private void setupPreview() {

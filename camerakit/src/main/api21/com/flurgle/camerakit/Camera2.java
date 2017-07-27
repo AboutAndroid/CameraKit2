@@ -90,6 +90,12 @@ class Camera2 extends CameraImpl {
     }
 
     @Override
+    int getCameraRotation() {
+        // TODO:
+        return 0;
+    }
+
+    @Override
     Camera getCamera() {
         return null;
     }
