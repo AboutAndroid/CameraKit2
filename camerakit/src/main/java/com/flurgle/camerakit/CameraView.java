@@ -9,6 +9,7 @@ import android.arch.lifecycle.OnLifecycleEvent;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.pm.PackageManager;
+import android.graphics.PointF;
 import android.hardware.Camera;
 import android.content.res.TypedArray;
 import android.graphics.Rect;
@@ -20,8 +21,10 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.hardware.display.DisplayManagerCompat;
+import android.support.v4.view.ScaleGestureDetectorCompat;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Display;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -73,6 +76,7 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
 
     private int currentZoom = 0;
     private float scaleFactor = 1.0f;
+    private int maxZoom = 1;
 
     private ScaleGestureDetector detector;
 
@@ -173,11 +177,10 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
             focusMarkerLayout.setOnTouchListener(new OnTouchListener() {
                 @Override
                 public boolean onTouch(View v, MotionEvent motionEvent) {
-                    int action = motionEvent.getAction();
                     if (motionEvent.getAction() == MotionEvent.ACTION_UP && mFocus == CameraKit.Constants.FOCUS_TAP_WITH_MARKER) {
                         focusMarkerLayout.focus(motionEvent.getX(), motionEvent.getY());
                     }
-
+                    //Log.d("CameraKit", "Touch Listener");
                     mPreviewImpl.getView().dispatchTouchEvent(motionEvent);
                     onTouchEvent(motionEvent);
                     return true;
@@ -382,12 +385,13 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         }
         Camera.Parameters params = mCameraImpl.getCamera().getParameters();
         int action = event.getAction();
+        handleZoom(event, params);
         if (event.getPointerCount() > 1) {
             if (action == MotionEvent.ACTION_POINTER_DOWN) {
                 //mDist = getFingerSpacing(event);
             } else if (action == MotionEvent.ACTION_MOVE && params.isZoomSupported()) {
                 mCameraImpl.getCamera().cancelAutoFocus();
-                handleZoom(event, params);
+                //handleZoom(event, params);
             }
         } else {
             if (action == MotionEvent.ACTION_UP) {
@@ -397,32 +401,14 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
         return true;
     }
     private void handleZoom(MotionEvent event, Camera.Parameters params) {
-        final int maxZoom = params.getMaxZoom();
+        maxZoom = params.getMaxZoom();
         currentZoom = params.getZoom();
         if(detector == null) {
-            detector = new ScaleGestureDetector(getContext(), new ScaleGestureDetector.SimpleOnScaleGestureListener() {
-                @Override
-                public boolean onScale(ScaleGestureDetector detector) {
-                    //System.out.println("Zoom - scalefactor " + detector.getScaleFactor());
-                    float tempZoom = (float)currentZoom;
-                    if(detector.getScaleFactor() < 1.0f) {
-                        tempZoom = (float)Math.floor(tempZoom * detector.getScaleFactor());
-                    }
-                    else {
-                        tempZoom = (float)Math.ceil(tempZoom * detector.getScaleFactor());
-                    }
-                    //System.out.println("Zoom - tempzoom " + tempZoom);
-                    //currentZoom *= detector.getScaleFactor();
-                    currentZoom = (int)Math.max(1, Math.min(tempZoom, maxZoom));
-                    //System.out.println("Zoom - currentZoom " + currentZoom);
-                    invalidate();
-                    return true;
-                }
-            });
+            detector = new ScaleGestureDetector(getContext(), new ScaleListener());
         }
         detector.onTouchEvent(event);
 
-        //System.out.println("CurrentZoom: " + currentZoom);
+        //Log.d("CameraKit", "handleZoom");
         params.setZoom(currentZoom);
         mCameraImpl.getCamera().setParameters(params);
     }
@@ -546,6 +532,57 @@ public class CameraView extends FrameLayout implements LifecycleObserver {
                     activity,
                     permissions.toArray(new String[permissions.size()]),
                     CameraKit.Constants.PERMISSION_REQUEST_CAMERA);
+        }
+    }
+
+    private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener{
+        private float lastSpanX;
+        private float lastSpanY;
+        private float startSpanX;
+        private float startSpanY;
+        private float zoomChange;
+        private float zoomStart;
+
+
+        @Override
+        public boolean onScale(ScaleGestureDetector detector) {
+            float spanX = detector.getCurrentSpanX();
+            float spanY = detector.getCurrentSpanY();
+
+            float xDiff = spanX - startSpanX;
+            //float yDiff = spanY - startSpanY;
+
+            float percentChange = xDiff / (float)getWidth();
+            zoomChange = (float)maxZoom * percentChange;
+            currentZoom = (int)zoomChange + (int)zoomStart;
+            if(currentZoom < 0) {
+                currentZoom = 0;
+            }
+            else if(currentZoom > maxZoom) {
+                currentZoom = maxZoom;
+            }
+            //Log.d("CameraKit","xDiff " + xDiff + " yDiff " + yDiff + " currentZoom " + currentZoom);
+
+            lastSpanX = spanX;
+            lastSpanY = spanY;
+            return true;
+        }
+
+        @Override
+        public boolean onScaleBegin(ScaleGestureDetector detector) {
+            lastSpanX = detector.getCurrentSpanX();
+            lastSpanY = detector.getCurrentSpanY();
+            startSpanX = lastSpanX;
+            startSpanY = lastSpanY;
+            zoomChange = 0.0f;
+            zoomStart = currentZoom;
+            return true;
+        }
+
+        @Override
+        public void onScaleEnd(ScaleGestureDetector detector) {
+            float endScale = detector.getScaleFactor();
+            //Log.d("CameraKit", "onScaleEnd " + endScale);
         }
     }
 
