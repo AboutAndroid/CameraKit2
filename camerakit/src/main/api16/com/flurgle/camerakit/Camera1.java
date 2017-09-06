@@ -324,16 +324,23 @@ public class Camera1 extends CameraImpl {
     // Code from SandriosCamera library
     // https://github.com/sandrios/sandriosCamera/blob/master/sandriosCamera/src/main/java/com/sandrios/sandriosCamera/internal/manager/impl/Camera1Manager.java#L212
     void initResolutions() {
-        List<Size> previewSizes = sizesFromList(mCameraParameters.getSupportedPreviewSizes());
-        List<Size> videoSizes = (Build.VERSION.SDK_INT > 10) ? sizesFromList(mCameraParameters.getSupportedVideoSizes()) : previewSizes;
+        try {
+            if(mCameraParameters!=null){
+                List<Size> previewSizes = sizesFromList(mCameraParameters.getSupportedPreviewSizes());
+                List<Size> videoSizes = (Build.VERSION.SDK_INT > 10) ? sizesFromList(mCameraParameters.getSupportedVideoSizes()) : previewSizes;
 
-        CamcorderProfile camcorderProfile = getCamcorderProfile(mVideoQuality);
+                CamcorderProfile camcorderProfile = getCamcorderProfile(mVideoQuality);
 
-        mCaptureSize = getSizeWithClosestRatio(
-                (videoSizes == null || videoSizes.isEmpty()) ? previewSizes : videoSizes,
-                camcorderProfile.videoFrameWidth, camcorderProfile.videoFrameHeight);
+                mCaptureSize = getSizeWithClosestRatio(
+                        (videoSizes == null || videoSizes.isEmpty()) ? previewSizes : videoSizes,
+                        camcorderProfile.videoFrameWidth, camcorderProfile.videoFrameHeight);
 
-        mPreviewSize = getSizeWithClosestRatio(previewSizes, mCaptureSize.getWidth(), mCaptureSize.getHeight());
+                mPreviewSize = getSizeWithClosestRatio(previewSizes, mCaptureSize.getWidth(), mCaptureSize.getHeight());
+            }
+        }catch (Exception e){
+
+        }
+
     }
 
     @Override
